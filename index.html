@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProDerbyLIVE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="contenedor acceso-contenedor">
+        <div class="card acceso-card">
+
+            <div class="brand-header">
+                <img src="logo.png" alt="ProDerbyLIVE" class="brand-logo">
+                <div class="brand-title">ProDerby<span>LIVE</span></div>
+                <div class="brand-subtitle">Vive tu pasión en la palma de tu mano</div>
+            </div>
+
+            <div class="acceso-box">
+
+                <div class="tabs acceso-tabs">
+                    <button onclick="mostrarTabAcceso('tabLogin')">
+                        Iniciar sesión
+                    </button>
+
+                    <button onclick="mostrarTabAcceso('tabRegistro')">
+                        Registro
+                    </button>
+                </div>
+
+                <hr>
+
+                <div id="tabLogin" class="tab-contenido">
+                    <h2>Acceso a la plataforma</h2>
+
+                    <input type="email" id="loginEmail" placeholder="Correo">
+                    <input type="password" id="loginPassword" placeholder="Contraseña">
+
+                    <button id="btnLogin">Entrar a ProDerbyLIVE</button>
+                </div>
+
+                <div id="tabRegistro" class="tab-contenido" style="display:none;">
+                    <h2>Crear cuenta</h2>
+
+                    <input type="text" id="registroNombre" placeholder="Nombre completo">
+                    <input type="email" id="registroEmail" placeholder="Correo">
+                    <input type="password" id="registroPassword" placeholder="Contraseña">
+
+                    <button id="btnRegistro">Crear cuenta</button>
+                </div>
+
+                <p id="mensaje"></p>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+
+</body>
+</html>

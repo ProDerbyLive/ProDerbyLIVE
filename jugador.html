@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sala del Jugador - ProDerbyLIVE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="contenedor">
+        <div class="card">
+
+            <div class="brand-header">
+                <img src="logo.png" alt="ProDerbyLIVE" class="brand-logo">
+                <div class="brand-title">ProDerby<span>LIVE</span></div>
+            </div>
+
+            <p id="estado">Verificando sesión...</p>
+
+            <div id="jugadorPanel" style="display:none;">
+
+                <div class="perfil-premium">
+                    <div class="perfil-info">
+                        <span class="perfil-label">USUARIO</span>
+                        <div class="perfil-nombre" id="usuarioNombre"></div>
+                    </div>
+
+                    <div class="saldo-card">
+                        <span class="saldo-label">SALDO DISPONIBLE</span>
+                        <div class="saldo-monto">$<span id="usuarioSaldo"></span></div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="tabs">
+                    <button onclick="mostrarTabJugador('tabApuestas')">Apuestas</button>
+                    <button onclick="mostrarTabJugador('tabHistorial')">Historial</button>
+                    <button onclick="mostrarTabJugador('tabMovimientos')">Movimientos</button>
+                </div>
+
+                <hr>
+
+                <div id="tabApuestas" class="tab-contenido">
+
+                    <div class="transmision-layout">
+
+                        <div class="video-columna">
+                            <h2>Transmisión en vivo</h2>
+                            <div id="videoYoutube"></div>
+                        </div>
+
+                        <div class="chat-columna">
+                            <h2>Chat en vivo</h2>
+
+                            <div id="listaChat"></div>
+
+                            <input
+                                type="text"
+                                id="mensajeChat"
+                                placeholder="Escribe un mensaje..."
+                            >
+
+                            <button id="btnEnviarChat">
+                                Enviar
+                            </button>
+
+                            <p id="estadoChat"></p>
+                        </div>
+
+                    </div>
+
+                    <hr>
+
+                    <h2>Peleas abiertas</h2>
+                    <div id="listaPeleas"></div>
+                </div>
+
+                <div id="tabHistorial" class="tab-contenido" style="display:none;">
+                    <h2>Historial de apuestas</h2>
+                    <div id="historialApuestas"></div>
+                </div>
+
+                <div id="tabMovimientos" class="tab-contenido" style="display:none;">
+                    <h2>Movimientos</h2>
+                    <div id="listaMovimientos"></div>
+                </div>
+
+                <hr>
+
+                <button id="btnVolver">Volver al inicio</button>
+                <button id="btnSalir">Cerrar sesión</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="jugador.js"></script>
+
+</body>
+</html>

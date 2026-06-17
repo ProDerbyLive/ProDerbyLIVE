@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - ProDerbyLIVE</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="contenedor">
+        <div class="card">
+
+            <div class="brand-header">
+                <img src="logo.png" alt="ProDerbyLIVE" class="brand-logo">
+                <div class="brand-title">ProDerby<span>LIVE</span></div>
+                <div class="brand-subtitle">Panel Administrador</div>
+            </div>
+
+            <p id="estado">Verificando acceso...</p>
+
+            <div id="adminPanel" style="display:none;">
+                <h2>Bienvenido Admin</h2>
+                <p>Acceso correcto.</p>
+
+                <hr>
+
+                <div class="tabs">
+                    <button onclick="mostrarTab('tabPeleas')">Peleas</button>
+                    <button onclick="mostrarTab('tabSalaVivo')">Sala en vivo</button>
+                    <button onclick="mostrarTab('tabJugadores')">Jugadores</button>
+                    <button onclick="mostrarTab('tabUsuarios')">Usuarios</button>
+                    <button onclick="mostrarTab('tabHistorial')">Historial</button>
+                    <button onclick="mostrarTab('tabCaja')">Caja</button>
+                </div>
+
+                <hr>
+
+                <div id="tabPeleas" class="tab-contenido">
+                    <h2>Derby activo</h2>
+                    <p id="derbyActivo">Cargando derby...</p>
+
+                    <input type="text" id="nombreNuevoDerby" placeholder="Nombre del nuevo derby">
+
+                    <button id="btnNuevoDerby">Iniciar nuevo Derby</button>
+                    <button id="btnFinalizarDerby">Finalizar Derby</button>
+
+                    <p id="mensajeDerby"></p>
+
+                    <hr>
+
+                    <h2>Transmisión YouTube</h2>
+
+                    <input type="text" id="youtubeUrl" placeholder="Pega aquí el link de YouTube oculto">
+
+                    <button id="btnGuardarYoutube">Guardar transmisión</button>
+
+                    <p id="mensajeYoutube"></p>
+
+                    <hr>
+
+                    <h2>Crear Pelea</h2>
+
+                    <input type="text" id="galloRojo" placeholder="Nombre gallo ROJO">
+                    <input type="text" id="galloVerde" placeholder="Nombre gallo VERDE">
+
+                    <button id="btnCrearPelea">Crear pelea</button>
+
+                    <p id="mensajePelea"></p>
+
+                    <hr>
+
+                    <h2>Peleas activas</h2>
+                    <div id="listaPeleas"></div>
+                </div>
+
+                <div id="tabSalaVivo" class="tab-contenido" style="display:none;">
+                    <h2>Sala en vivo</h2>
+
+                    <div class="transmision-layout">
+
+                        <div class="video-columna">
+                            <h2>Transmisión en vivo</h2>
+                            <div id="videoYoutubeAdmin"></div>
+                        </div>
+
+                        <div class="chat-columna">
+                            <h2>Chat en vivo</h2>
+
+                            <div
+                                id="listaChatAdmin"
+                                style="max-height:350px; overflow-y:auto; padding:10px; border-radius:12px;"
+                            ></div>
+
+                            <input
+                                type="text"
+                                id="mensajeChatAdmin"
+                                placeholder="Escribe un mensaje como admin..."
+                            >
+
+                            <button id="btnEnviarChatAdmin">
+                                Enviar
+                            </button>
+
+                            <p id="estadoChatAdmin"></p>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div id="tabJugadores" class="tab-contenido" style="display:none;">
+                    <h2>Jugadores</h2>
+
+                    <input type="text" id="buscarJugador" placeholder="Buscar jugador...">
+
+                    <div id="listaJugadores"></div>
+
+                    <div id="detalleJugador" style="display:none;"></div>
+                </div>
+
+                <div id="tabUsuarios" class="tab-contenido" style="display:none;">
+                    <h2>Usuarios</h2>
+
+                    <input type="text" id="buscarUsuarioAdmin" placeholder="Buscar usuario...">
+
+                    <hr>
+
+                    <h2>Solicitudes pendientes</h2>
+
+                    <div id="solicitudesUsuarios"></div>
+
+                    <hr>
+
+                    <h2>Usuarios registrados</h2>
+
+                    <div id="controlUsuarios"></div>
+                </div>
+
+                <div id="tabHistorial" class="tab-contenido" style="display:none;">
+                    <h2>Historial</h2>
+                    <div id="historialPeleas"></div>
+                </div>
+
+                <div id="tabCaja" class="tab-contenido" style="display:none;">
+                    <h2>Caja del Derby</h2>
+                    <div id="resumenCaja">Cargando caja...</div>
+                </div>
+
+                <hr>
+
+                <button id="btnVolver">Volver al inicio</button>
+                <button id="btnSalir">Cerrar sesión</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="admin.js"></script>
+
+</body>
+</html>

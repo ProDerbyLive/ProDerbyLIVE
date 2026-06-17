@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ProDerbyLIVE Overlay</title>
+
+<style>
+body{
+    margin:0;
+    padding:0;
+    background:transparent;
+    overflow:hidden;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+#overlayAnimado{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    min-width:780px;
+    max-width:1100px;
+    background:rgba(0,0,0,.90);
+    border:4px solid #d4af37;
+    border-radius:24px;
+    padding:36px;
+    text-align:center;
+    color:white;
+    display:none;
+    box-shadow:0 0 45px rgba(212,175,55,.8);
+}
+
+#marcaAnimada{
+    font-size:30px;
+    font-weight:bold;
+    color:#d4af37;
+    letter-spacing:3px;
+    margin-bottom:14px;
+}
+
+#derbyAnimado{
+    font-size:25px;
+    margin-bottom:18px;
+}
+
+#tituloAnimado{
+    font-size:58px;
+    font-weight:bold;
+    margin-bottom:18px;
+}
+
+#mensajeAnimado{
+    font-size:46px;
+    font-weight:bold;
+}
+
+.animar{
+    animation:entrada .45s ease;
+}
+
+@keyframes entrada{
+    from{
+        opacity:0;
+        transform:translate(-50%,-80%) scale(.92);
+    }
+
+    to{
+        opacity:1;
+        transform:translate(-50%,-50%) scale(1);
+    }
+}
+
+#panelApuestas{
+    position:absolute;
+    right:35px;
+    top:35px;
+    width:360px;
+    background:rgba(0,0,0,.88);
+    border:3px solid #d4af37;
+    border-radius:20px;
+    color:white;
+    display:none;
+    overflow:hidden;
+    box-shadow:0 0 35px rgba(212,175,55,.65);
+}
+
+#panelHeader{
+    background:linear-gradient(90deg, #1a1a1a, #000);
+    border-bottom:2px solid #d4af37;
+    padding:12px 16px;
+    text-align:center;
+}
+
+#panelMarca{
+    color:#d4af37;
+    font-size:20px;
+    font-weight:bold;
+    letter-spacing:1px;
+}
+
+#panelDerby{
+    font-size:13px;
+    opacity:.85;
+    margin-top:4px;
+}
+
+#panelPelea{
+    font-size:30px;
+    font-weight:bold;
+    text-align:center;
+    padding:13px 10px 5px;
+}
+
+.filaApuesta{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin:10px 16px;
+    padding:12px 14px;
+    border-radius:12px;
+    font-size:24px;
+    font-weight:bold;
+}
+
+.filaRojo{
+    background:linear-gradient(90deg, rgba(150,0,0,.85), rgba(60,0,0,.85));
+    border:1px solid #ff3333;
+}
+
+.filaVerde{
+    background:linear-gradient(90deg, rgba(0,120,45,.85), rgba(0,50,20,.85));
+    border:1px solid #00d060;
+}
+
+#montoRojo,
+#montoVerde{
+    color:#fff;
+    text-shadow:0 0 8px rgba(255,255,255,.45);
+}
+
+#estadoApuestas{
+    margin-top:8px;
+    padding:12px;
+    text-align:center;
+    font-size:19px;
+    font-weight:bold;
+    letter-spacing:1px;
+    background:#d4af37;
+    color:#000;
+}
+
+.estadoCerradas{
+    background:#8b0000 !important;
+    color:#fff !important;
+}
+
+.panelEntrada{
+    animation:panelEntrada .45s ease;
+}
+
+@keyframes panelEntrada{
+    from{
+        opacity:0;
+        transform:translateX(60px) scale(.95);
+    }
+
+    to{
+        opacity:1;
+        transform:translateX(0) scale(1);
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="overlayAnimado">
+    <div id="marcaAnimada">ProDerbyLIVE</div>
+    <div id="derbyAnimado"></div>
+    <div id="tituloAnimado"></div>
+    <div id="mensajeAnimado"></div>
+</div>
+
+<div id="panelApuestas">
+    <div id="panelHeader">
+        <div id="panelMarca">ProDerbyLIVE</div>
+        <div id="panelDerby"></div>
+    </div>
+
+    <div id="panelPelea">PELEA #</div>
+
+    <div class="filaApuesta filaRojo">
+        <span>ROJO</span>
+        <span id="montoRojo">$0</span>
+    </div>
+
+    <div class="filaApuesta filaVerde">
+        <span>VERDE</span>
+        <span id="montoVerde">$0</span>
+    </div>
+
+    <div id="estadoApuestas">APUESTAS ABIERTAS</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL =
+"https://cnaewaauagdgwxeagmde.supabase.co";
+
+const SUPABASE_KEY =
+"sb_publishable_2YkOFGlyxVNtSnejMC_sLg_7NcPVrKz";
+
+const supabaseClient =
+supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+let ultimoEvento = 0;
+let ultimaPeleaPanel = null;
+
+async function cargarUltimoEvento(){
+
+    const { data, error } =
+    await supabaseClient
+        .from("overlay_eventos")
+        .select("*")
+        .order("id", { ascending:false })
+        .limit(1);
+
+    if(error || !data || !data.length){
+        return;
+    }
+
+    const evento = data[0];
+
+    if(evento.id === ultimoEvento){
+        return;
+    }
+
+    ultimoEvento = evento.id;
+
+    mostrarEventoAnimado(evento);
+}
+
+function mostrarEventoAnimado(evento){
+
+    const overlay =
+    document.getElementById("overlayAnimado");
+
+    const datos =
+    evento.datos || {};
+
+    const titulo =
+        (evento.titulo || "").toLowerCase();
+
+    const mensajeTexto =
+        (evento.mensaje || "").toLowerCase();
+
+    const textoCompleto =
+        titulo + " " + mensajeTexto;
+
+    const ganador =
+        String(evento.mensaje || "").trim();
+
+    const partidoRojo =
+        String(datos.rojo || "").trim();
+
+    const partidoVerde =
+        String(datos.verde || "").trim();
+
+    /* ESTILO POR DEFECTO (DORADO) */
+    overlay.style.background =
+        "rgba(0,0,0,.90)";
+
+    overlay.style.borderColor =
+        "#d4af37";
+
+    overlay.style.boxShadow =
+        "0 0 45px rgba(212,175,55,.8)";
+
+    document.getElementById("marcaAnimada").style.color =
+        "#d4af37";
+
+    /* GANA ROJO */
+    if(
+        ganador &&
+        partidoRojo &&
+        ganador === partidoRojo
+    ){
+
+        overlay.style.background =
+            "rgba(70,0,0,.95)";
+
+        overlay.style.borderColor =
+            "#ff3030";
+
+        overlay.style.boxShadow =
+            "0 0 65px rgba(255,0,0,.95)";
+
+        document.getElementById("marcaAnimada").style.color =
+            "#ff5050";
+    }
+
+    /* GANA VERDE */
+    else if(
+        ganador &&
+        partidoVerde &&
+        ganador === partidoVerde
+    ){
+
+        overlay.style.background =
+            "rgba(0,50,0,.95)";
+
+        overlay.style.borderColor =
+            "#00ff66";
+
+        overlay.style.boxShadow =
+            "0 0 65px rgba(0,255,80,.95)";
+
+        document.getElementById("marcaAnimada").style.color =
+            "#00ff66";
+    }
+
+    /* TABLAS O CANCELADA */
+    else if(
+        textoCompleto.includes("tabla") ||
+        textoCompleto.includes("cancel")
+    ){
+
+        overlay.style.background =
+            "rgba(0,0,0,.90)";
+
+        overlay.style.borderColor =
+            "#d4af37";
+
+        overlay.style.boxShadow =
+            "0 0 65px rgba(212,175,55,.95)";
+
+        document.getElementById("marcaAnimada").style.color =
+            "#d4af37";
+    }
+
+    document.getElementById("derbyAnimado").innerText =
+        datos.derby || "";
+
+    document.getElementById("tituloAnimado").innerText =
+        evento.titulo || "";
+
+    document.getElementById("mensajeAnimado").innerText =
+        evento.mensaje || "";
+
+    overlay.style.display = "block";
+
+    overlay.classList.remove("animar");
+
+    void overlay.offsetWidth;
+
+    overlay.classList.add("animar");
+
+    setTimeout(() => {
+        overlay.style.display = "none";
+    }, 5000);
+}
+
+async function cargarPanelApuestas(){
+
+    const panel =
+    document.getElementById("panelApuestas");
+
+    const { data: derby, error: errorDerby } =
+    await supabaseClient
+        .from("derbys")
+        .select("*")
+        .eq("estado", "activo")
+        .order("id", { ascending:false })
+        .limit(1)
+        .single();
+
+    if(errorDerby || !derby){
+        panel.style.display = "none";
+        return;
+    }
+
+    const { data: peleas, error: errorPeleas } =
+    await supabaseClient
+        .from("peleas")
+        .select("*")
+        .eq("derby_id", derby.id)
+        .order("id", { ascending:false })
+        .limit(1);
+
+    if(errorPeleas || !peleas || !peleas.length){
+        panel.style.display = "none";
+        return;
+    }
+
+    const pelea = peleas[0];
+    const estadoPelea = (pelea.estado || "").toLowerCase();
+
+    const estadosParaMostrar = [
+        "abierta",
+        "cerrada",
+        "apuestas abiertas",
+        "apuestas cerradas"
+    ];
+
+    if(!estadosParaMostrar.includes(estadoPelea)){
+        panel.style.display = "none";
+        return;
+    }
+
+    const { data: totales, error: errorTotales } =
+    await supabaseClient.rpc(
+        "obtener_totales_apuestas_overlay",
+        {
+            p_pelea_id: pelea.id
+        }
+    );
+
+    if(errorTotales){
+        console.error("Error cargando totales:", errorTotales);
+        document.getElementById("montoRojo").innerText = "$0";
+        document.getElementById("montoVerde").innerText = "$0";
+    }
+
+    const totalRojo =
+        totales && totales.length
+        ? Number(totales[0].total_rojo || 0)
+        : 0;
+
+    const totalVerde =
+        totales && totales.length
+        ? Number(totales[0].total_verde || 0)
+        : 0;
+
+    const numeroPelea =
+        pelea.numero_derby || pelea.id;
+
+    document.getElementById("panelDerby").innerText =
+        derby.nombre || "";
+
+    document.getElementById("panelPelea").innerText =
+        "PELEA #" + numeroPelea;
+
+    document.getElementById("montoRojo").innerText =
+        formatoDinero(totalRojo);
+
+    document.getElementById("montoVerde").innerText =
+        formatoDinero(totalVerde);
+
+    const estadoApuestas =
+    document.getElementById("estadoApuestas");
+
+    if(
+        estadoPelea === "abierta" ||
+        estadoPelea === "apuestas abiertas"
+    ){
+        estadoApuestas.innerText = "APUESTAS ABIERTAS";
+        estadoApuestas.classList.remove("estadoCerradas");
+    }else{
+        estadoApuestas.innerText = "APUESTAS CERRADAS";
+        estadoApuestas.classList.add("estadoCerradas");
+    }
+
+    if(panel.style.display !== "block"){
+        panel.style.display = "block";
+    }
+
+    if(ultimaPeleaPanel !== pelea.id){
+        ultimaPeleaPanel = pelea.id;
+
+        panel.classList.remove("panelEntrada");
+        void panel.offsetWidth;
+        panel.classList.add("panelEntrada");
+    }
+}
+
+function formatoDinero(valor){
+    return "$" + Number(valor || 0).toLocaleString("es-MX", {
+        maximumFractionDigits:0
+    });
+}
+
+setInterval(cargarUltimoEvento, 1000);
+setInterval(cargarPanelApuestas, 3000);
+
+cargarUltimoEvento();
+cargarPanelApuestas();
+</script>
+
+</body>
+</html>
