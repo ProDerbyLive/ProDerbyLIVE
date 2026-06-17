@@ -11,6 +11,15 @@ let derbyActivo = null;
 let actualizandoAdmin = false;
 let youtubeActualAdmin = "";
 
+function escaparHTML(texto) {
+    return String(texto || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
 async function verificarAdmin() {
     const estado = document.getElementById("estado");
     const adminPanel = document.getElementById("adminPanel");
@@ -169,7 +178,7 @@ function cargarVideoYoutubeAdmin() {
 
     contenedor.innerHTML = `
         <div class="pelea-card">
-            <h3>${derbyActivo.nombre}</h3>
+            <h3>${escaparHTML(derbyActivo.nombre)}</h3>
 
             <div style="position:relative; width:100%; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:12px;">
                 <iframe
@@ -200,20 +209,14 @@ async function cargarChatAdmin() {
     input.disabled = false;
     boton.disabled = false;
 
-    const { data: mensajes, error } = await supabaseClient
-        .from("chat_mensajes")
-        .select(`
-            *,
-            perfiles (
-                usuario,
-                rol
-            )
-        `)
-        .order("id", { ascending: false })
-        .limit(40);
+    const { data: mensajes, error } = await supabaseClient.rpc(
+        "obtener_chat_mensajes",
+        { p_limite: 40 }
+    );
 
     if (error) {
         lista.innerHTML = "Error cargando chat.";
+        console.error("Error cargando chat admin:", error.message);
         return;
     }
 
@@ -227,22 +230,22 @@ async function cargarChatAdmin() {
     }
 
     ordenados.forEach(msg => {
-        const nombre = msg.perfiles?.usuario || "Usuario";
-        const rol = msg.perfiles?.rol || "jugador";
+        const nombre = msg.usuario || "Usuario";
+        const rol = msg.rol || "jugador";
         const esAdmin = rol === "admin";
 
         const fecha = msg.creado_en
-            ? new Date(msg.creado_en).toLocaleTimeString()
+            ? new Date(msg.creado_en).toLocaleTimeString("es-MX")
             : "";
 
         lista.innerHTML += `
             <div class="chat-mensaje ${esAdmin ? "chat-admin" : ""}">
                 <p>
                     ${esAdmin ? `<span class="admin-badge">ADMIN</span>` : ""}
-                    <strong>${nombre}</strong>
-                    <span class="chat-fecha">${fecha}</span>
+                    <strong>${escaparHTML(nombre)}</strong>
+                    <span class="chat-fecha">${escaparHTML(fecha)}</span>
                 </p>
-                <p>${msg.mensaje}</p>
+                <p>${escaparHTML(msg.mensaje)}</p>
             </div>
         `;
     });
@@ -382,14 +385,19 @@ También se limpiará el chat en vivo.`
         return;
     }
 
-    const { error: errorChat } = await supabaseClient.rpc("limpiar_chat_admin");
+    const { data: totalBorrados, error: errorChat } = await supabaseClient.rpc("limpiar_chat_admin");
 
     if (errorChat) {
         alert("Derby finalizado, pero hubo error limpiando el chat: " + errorChat.message);
         if (mensaje) mensaje.innerText = "Derby finalizado, pero hubo error limpiando el chat.";
     } else {
-        alert("Derby finalizado correctamente. Chat limpiado.");
+        alert(`Derby finalizado correctamente. Chat limpiado (${totalBorrados || 0} mensajes).`);
         if (mensaje) mensaje.innerText = "Derby finalizado correctamente. Chat limpiado.";
+
+        const listaChatAdmin = document.getElementById("listaChatAdmin");
+        if (listaChatAdmin) {
+            listaChatAdmin.innerHTML = "<p>No hay mensajes todavía.</p>";
+        }
     }
 
     derbyActivo = null;
@@ -486,7 +494,7 @@ async function cargarCaja() {
         contenedor.innerHTML = `
             <div class="pelea-card">
                 <h3>${tipoCaja === "activo" ? "Derby activo" : "Último derby finalizado"}</h3>
-                <h3>${derbyCaja.nombre}</h3>
+                <h3>${escaparHTML(derbyCaja.nombre)}</h3>
                 <p><strong>Total apostado:</strong> ${formatearDinero(0)}</p>
                 <p><strong>Ganancia de la casa:</strong> ${formatearDinero(0)}</p>
                 ${
@@ -520,7 +528,7 @@ async function cargarCaja() {
     contenedor.innerHTML = `
         <div class="pelea-card">
             <h3>${tipoCaja === "activo" ? "Derby activo" : "Último derby finalizado"}</h3>
-            <h3>${derbyCaja.nombre}</h3>
+            <h3>${escaparHTML(derbyCaja.nombre)}</h3>
 
             <p><strong>Total apostado:</strong> ${formatearDinero(totalApostado)}</p>
             <p><strong>Ganancia de la casa:</strong> ${formatearDinero(gananciaCasa)}</p>
@@ -587,7 +595,7 @@ function mostrarListaJugadores(jugadores) {
 
         lista.innerHTML += `
             <button class="jugador-boton" onclick="abrirDetalleJugador('${jugador.id}')">
-                ${nombreMostrar} - Saldo $${saldoMostrar}
+                ${escaparHTML(nombreMostrar)} - Saldo $${escaparHTML(saldoMostrar)}
             </button>
         `;
     });
@@ -612,9 +620,9 @@ function abrirDetalleJugador(jugadorId) {
     detalle.style.display = "block";
     detalle.innerHTML = `
         <div class="pelea-card">
-            <h3>${nombreMostrar}</h3>
-            <p><strong>Rol:</strong> ${jugador.rol || "jugador"}</p>
-            <p><strong>Saldo actual:</strong> $${saldoMostrar}</p>
+            <h3>${escaparHTML(nombreMostrar)}</h3>
+            <p><strong>Rol:</strong> ${escaparHTML(jugador.rol || "jugador")}</p>
+            <p><strong>Saldo actual:</strong> $${escaparHTML(saldoMostrar)}</p>
             <input type="number" id="monto-detalle-${jugador.id}" placeholder="Cantidad">
             <button onclick="agregarSaldoDetalle('${jugador.id}')">Agregar saldo</button>
             <button onclick="quitarSaldoDetalle('${jugador.id}')">Quitar saldo</button>
@@ -655,6 +663,7 @@ async function quitarSaldoDetalle(jugadorId) {
 
     await modificarSaldo(jugadorId, -cantidad, "admin_quita_saldo");
 }
+
 async function modificarSaldo(jugadorId, cambio, tipo) {
     const { data: jugador, error: errorJugador } = await supabaseClient
         .from("perfiles")
@@ -841,13 +850,13 @@ function crearTarjetaPelea(pelea, mostrarBotones) {
 
     return `
         <div class="pelea-card">
-            <h3>${nombreDerby}</h3>
-            <h3>Pelea #${numero}</h3>
-            <p><strong>Zona:</strong> ${pelea.zona || "Zona 1"}</p>
-            <p><strong>ROJO:</strong> ${pelea.gallo_rojo}</p>
-            <p><strong>VERDE:</strong> ${pelea.gallo_verde}</p>
-            <p><strong>Estado:</strong> ${pelea.estado}</p>
-            <p><strong>Resultado:</strong> ${pelea.resultado || "Pendiente"}</p>
+            <h3>${escaparHTML(nombreDerby)}</h3>
+            <h3>Pelea #${escaparHTML(numero)}</h3>
+            <p><strong>Zona:</strong> ${escaparHTML(pelea.zona || "Zona 1")}</p>
+            <p><strong>ROJO:</strong> ${escaparHTML(pelea.gallo_rojo)}</p>
+            <p><strong>VERDE:</strong> ${escaparHTML(pelea.gallo_verde)}</p>
+            <p><strong>Estado:</strong> ${escaparHTML(pelea.estado)}</p>
+            <p><strong>Resultado:</strong> ${escaparHTML(pelea.resultado || "Pendiente")}</p>
             ${botones}
         </div>
     `;
@@ -1122,7 +1131,7 @@ function mostrarUsuariosAdmin(textoBusqueda = "") {
         if (usuario.estado_cuenta === "pendiente") {
             solicitudes.innerHTML += `
                 <div class="pelea-card">
-                    <h3>${nombre}</h3>
+                    <h3>${escaparHTML(nombre)}</h3>
                     <p>Estado: pendiente</p>
 
                     <button onclick="aprobarUsuario('${usuario.id}')">
@@ -1137,9 +1146,9 @@ function mostrarUsuariosAdmin(textoBusqueda = "") {
         } else {
             control.innerHTML += `
                 <div class="pelea-card">
-                    <h3>${nombre}</h3>
-                    <p>Estado: ${usuario.estado_cuenta || "activo"}</p>
-                    <p>Saldo: $${usuario.saldo || 0}</p>
+                    <h3>${escaparHTML(nombre)}</h3>
+                    <p>Estado: ${escaparHTML(usuario.estado_cuenta || "activo")}</p>
+                    <p>Saldo: $${escaparHTML(usuario.saldo || 0)}</p>
                     <p>Chat: ${usuario.chat_muteado ? "Muteado" : "Activo"}</p>
 
                     ${
