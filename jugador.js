@@ -12,6 +12,15 @@ let actualizandoJugador = false;
 let youtubeActual = "";
 let cuentaExpulsada = false;
 
+function escaparHTML(texto) {
+    return String(texto || "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
 async function expulsarUsuario(mensajeTexto) {
     if (cuentaExpulsada) return;
 
@@ -166,7 +175,7 @@ function cargarVideoYoutube() {
 
     contenedor.innerHTML = `
         <div class="pelea-card">
-            <h3>${derbyActivo.nombre}</h3>
+            <h3>${escaparHTML(derbyActivo.nombre)}</h3>
 
             <div style="position:relative; width:100%; padding-bottom:56.25%; height:0; overflow:hidden; border-radius:12px;">
                 <iframe
@@ -202,7 +211,7 @@ async function cargarPeleas() {
 
     lista.innerHTML = `
         <div class="pelea-card">
-            <h3>${derbyActivo.nombre}</h3>
+            <h3>${escaparHTML(derbyActivo.nombre)}</h3>
             <p><strong>Derby activo</strong></p>
         </div>
     `;
@@ -217,12 +226,12 @@ async function cargarPeleas() {
 
         lista.innerHTML += `
             <div class="pelea-card">
-                <h3>Pelea #${numero}</h3>
+                <h3>Pelea #${escaparHTML(numero)}</h3>
 
-                <p><strong>Derby:</strong> ${derbyActivo.nombre}</p>
-                <p><strong>Zona:</strong> ${pelea.zona}</p>
-                <p><strong>ROJO:</strong> ${pelea.gallo_rojo}</p>
-                <p><strong>VERDE:</strong> ${pelea.gallo_verde}</p>
+                <p><strong>Derby:</strong> ${escaparHTML(derbyActivo.nombre)}</p>
+                <p><strong>Zona:</strong> ${escaparHTML(pelea.zona)}</p>
+                <p><strong>ROJO:</strong> ${escaparHTML(pelea.gallo_rojo)}</p>
+                <p><strong>VERDE:</strong> ${escaparHTML(pelea.gallo_verde)}</p>
 
                 <input
                     type="number"
@@ -267,20 +276,14 @@ async function cargarChat() {
         boton.disabled = false;
     }
 
-    const { data: mensajes, error } = await supabaseClient
-        .from("chat_mensajes")
-        .select(`
-            *,
-            perfiles (
-                usuario,
-                rol
-            )
-        `)
-        .order("id", { ascending: false })
-        .limit(40);
+    const { data: mensajes, error } = await supabaseClient.rpc(
+        "obtener_chat_mensajes",
+        { p_limite: 40 }
+    );
 
     if (error) {
         lista.innerHTML = "Error cargando chat.";
+        console.error("Error cargando chat jugador:", error.message);
         return;
     }
 
@@ -294,22 +297,22 @@ async function cargarChat() {
     }
 
     ordenados.forEach(msg => {
-        const nombre = msg.perfiles?.usuario || "Usuario";
-        const rol = msg.perfiles?.rol || "jugador";
+        const nombre = msg.usuario || "Usuario";
+        const rol = msg.rol || "jugador";
         const esAdmin = rol === "admin";
 
         const fecha = msg.creado_en
-            ? new Date(msg.creado_en).toLocaleTimeString()
+            ? new Date(msg.creado_en).toLocaleTimeString("es-MX")
             : "";
 
         lista.innerHTML += `
             <div class="chat-mensaje ${esAdmin ? "chat-admin" : ""}">
                 <p>
                     ${esAdmin ? `<span class="admin-badge">ADMIN</span>` : ""}
-                    <strong>${nombre}</strong>
-                    <span class="chat-fecha">${fecha}</span>
+                    <strong>${escaparHTML(nombre)}</strong>
+                    <span class="chat-fecha">${escaparHTML(fecha)}</span>
                 </p>
-                <p>${msg.mensaje}</p>
+                <p>${escaparHTML(msg.mensaje)}</p>
             </div>
         `;
     });
@@ -444,24 +447,24 @@ async function cargarHistorialApuestas() {
 
         historial.innerHTML += `
             <div class="pelea-card">
-                <h3>${nombreDerby}</h3>
-                <h3>Pelea #${numeroPelea}</h3>
+                <h3>${escaparHTML(nombreDerby)}</h3>
+                <h3>Pelea #${escaparHTML(numeroPelea)}</h3>
 
-                <p><strong>ROJO:</strong> ${pelea?.gallo_rojo || "-"}</p>
-                <p><strong>VERDE:</strong> ${pelea?.gallo_verde || "-"}</p>
+                <p><strong>ROJO:</strong> ${escaparHTML(pelea?.gallo_rojo || "-")}</p>
+                <p><strong>VERDE:</strong> ${escaparHTML(pelea?.gallo_verde || "-")}</p>
 
-                <p><strong>Mi color:</strong> ${color.toUpperCase()}</p>
-                <p><strong>Aposté:</strong> $${total}</p>
-                <p><strong>Casado:</strong> $${matcheada}</p>
-                <p><strong>Pendiente:</strong> $${pendiente}</p>
+                <p><strong>Mi color:</strong> ${escaparHTML(color.toUpperCase())}</p>
+                <p><strong>Aposté:</strong> $${escaparHTML(total)}</p>
+                <p><strong>Casado:</strong> $${escaparHTML(matcheada)}</p>
+                <p><strong>Pendiente:</strong> $${escaparHTML(pendiente)}</p>
 
-                <p><strong>Estado:</strong> ${estadoTexto}</p>
+                <p><strong>Estado:</strong> ${escaparHTML(estadoTexto)}</p>
 
-                <p><strong>Ganancia neta:</strong> $${ganancia}</p>
-                <p><strong>Comisión:</strong> $${comision}</p>
+                <p><strong>Ganancia neta:</strong> $${escaparHTML(ganancia)}</p>
+                <p><strong>Comisión:</strong> $${escaparHTML(comision)}</p>
 
-                <p><strong>Total cobrado:</strong> $${totalCobrado}</p>
-                <p><strong>Desglose:</strong> ${desglose}</p>
+                <p><strong>Total cobrado:</strong> $${escaparHTML(totalCobrado)}</p>
+                <p><strong>Desglose:</strong> ${escaparHTML(desglose)}</p>
             </div>
         `;
     });
@@ -513,20 +516,20 @@ async function cargarMovimientos() {
 
         contenedor.innerHTML += `
             <div class="pelea-card">
-                <h3>${tipoTexto}</h3>
+                <h3>${escaparHTML(tipoTexto)}</h3>
 
-                <p><strong>Fecha:</strong> ${fecha}</p>
-                <p><strong>Cantidad:</strong> ${signo}$${mov.cantidad}</p>
-                <p><strong>Estado:</strong> ${mov.estado}</p>
+                <p><strong>Fecha:</strong> ${escaparHTML(fecha)}</p>
+                <p><strong>Cantidad:</strong> ${escaparHTML(signo)}$${escaparHTML(mov.cantidad)}</p>
+                <p><strong>Estado:</strong> ${escaparHTML(mov.estado)}</p>
 
-                <p><strong>Saldo anterior:</strong> $${mov.saldo_anterior || 0}</p>
-                <p><strong>Saldo nuevo:</strong> $${mov.saldo_nuevo || 0}</p>
+                <p><strong>Saldo anterior:</strong> $${escaparHTML(mov.saldo_anterior || 0)}</p>
+                <p><strong>Saldo nuevo:</strong> $${escaparHTML(mov.saldo_nuevo || 0)}</p>
 
-                <p><strong>Nota:</strong> ${mov.nota || "-"}</p>
+                <p><strong>Nota:</strong> ${escaparHTML(mov.nota || "-")}</p>
 
                 ${
                     adminNombre
-                    ? `<p><strong>Admin:</strong> ${adminNombre}</p>`
+                    ? `<p><strong>Admin:</strong> ${escaparHTML(adminNombre)}</p>`
                     : ""
                 }
             </div>
