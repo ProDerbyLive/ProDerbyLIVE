@@ -1027,3 +1027,176 @@ body:has(.acceso-contenedor)::before{
         transform:scale(1);
     }
 }
+/* ==========================================
+   MERCADOS Y BOTONES DOY/AGARRO 80
+========================================== */
+
+.pelea-apuesta-card{
+    border-color:rgba(212,175,55,.35);
+}
+
+.peleadores-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin:16px 0;
+}
+
+.peleador-box{
+    padding:16px;
+    border-radius:16px;
+    text-align:center;
+    border:1px solid rgba(255,255,255,.08);
+}
+
+.peleador-box span{
+    display:block;
+    font-size:12px;
+    letter-spacing:2px;
+    font-weight:900;
+    margin-bottom:6px;
+}
+
+.peleador-box strong{
+    display:block;
+    font-size:20px;
+    color:#fff;
+}
+
+.peleador-rojo{
+    background:linear-gradient(180deg, rgba(155,17,30,.42), rgba(35,6,10,.9));
+    border-color:rgba(255,0,0,.28);
+}
+
+.peleador-verde{
+    background:linear-gradient(180deg, rgba(22,138,52,.42), rgba(6,35,14,.9));
+    border-color:rgba(22,138,52,.35);
+}
+
+.mercado-panel{
+    margin:18px 0;
+    padding:16px;
+    border-radius:18px;
+    background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.18));
+    border:1px solid rgba(212,175,55,.18);
+}
+
+.mercado-titulo{
+    text-align:center;
+    color:var(--dorado-2);
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    font-size:13px;
+    margin-bottom:10px;
+}
+
+.mercado-titulo-80{
+    margin-top:18px;
+}
+
+.mercado-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.mercado-80-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.mercado-box{
+    padding:12px;
+    border-radius:14px;
+    text-align:center;
+    border:1px solid rgba(255,255,255,.08);
+}
+
+.mercado-box span{
+    display:block;
+    font-size:11px;
+    font-weight:900;
+    letter-spacing:1px;
+    margin-bottom:5px;
+}
+
+.mercado-box strong{
+    display:block;
+    font-size:17px;
+    color:#fff;
+}
+
+.mercado-rojo{
+    background:linear-gradient(180deg, rgba(155,17,30,.36), rgba(35,5,10,.85));
+    border-color:rgba(255,0,0,.25);
+}
+
+.mercado-verde{
+    background:linear-gradient(180deg, rgba(22,138,52,.36), rgba(5,35,14,.85));
+    border-color:rgba(22,138,52,.35);
+}
+
+.apuestas-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+    margin-top:12px;
+}
+
+.apuesta-lado{
+    padding:12px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.08);
+}
+
+.apuesta-lado-rojo{
+    background:linear-gradient(180deg, rgba(155,17,30,.22), rgba(35,5,10,.7));
+}
+
+.apuesta-lado-verde{
+    background:linear-gradient(180deg, rgba(22,138,52,.22), rgba(5,35,14,.7));
+}
+
+.btn-rojo{
+    background:linear-gradient(135deg, #7c0712, #b80000, #e03b3b) !important;
+    color:#fff !important;
+}
+
+.btn-verde{
+    background:linear-gradient(135deg, #0d5f26, #168a34, #31c65b) !important;
+    color:#fff !important;
+}
+
+.btn-apuesta-principal{
+    min-height:54px;
+    font-size:17px;
+    text-transform:uppercase;
+}
+
+.apuesta-80-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin-top:8px;
+}
+
+.btn-apuesta-mini{
+    font-size:13px;
+    padding:10px 8px;
+    min-height:42px;
+}
+
+@media(max-width:640px){
+    .peleadores-grid,
+    .mercado-grid,
+    .mercado-80-grid,
+    .apuestas-grid{
+        grid-template-columns:1fr;
+    }
+
+    .apuesta-80-row{
+        grid-template-columns:1fr 1fr;
+    }
+}
