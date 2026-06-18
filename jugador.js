@@ -908,4 +908,11 @@ document
 setInterval(cargarChat, 3000);
 setInterval(actualizarSaldoYEstado, 5000);
 
+setInterval(async () => {
+    if (!jugadorActual || usuarioEstaEscribiendoApuesta()) return;
+
+    await cargarDerbyActivo();
+    await cargarPeleas();
+}, 3000);
+
 cargarJugador();
