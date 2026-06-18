@@ -246,7 +246,8 @@ function usuarioEstaEscribiendoApuesta() {
         elementoActivo &&
         elementoActivo.tagName === "INPUT" &&
         elementoActivo.id &&
-        elementoActivo.id.startsWith("monto-pelea-")
+        elementoActivo.id.startsWith("monto-pelea-") &&
+        elementoActivo.value.trim() !== ""
     );
 }
 
@@ -909,7 +910,7 @@ setInterval(cargarChat, 3000);
 setInterval(actualizarSaldoYEstado, 5000);
 
 setInterval(async () => {
-    if (!jugadorActual || usuarioEstaEscribiendoApuesta()) return;
+    if (!jugadorActual) return;
 
     await cargarDerbyActivo();
     await cargarPeleas();
