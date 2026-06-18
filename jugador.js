@@ -750,7 +750,7 @@ const notaMostrar =
                 <p><strong>Saldo nuevo:</strong> $${escaparHTML(mov.saldo_nuevo || 0)}</p>
 
                 <p><strong>Nota:</strong> ${escaparHTML(notaMostrar)}</p>
-                <p><strong>Admin:</strong> ${escaparHTML(adminNombre)}</p>
+                <p><strong>Admin:</strong> ${escaparHTML(mov.nota || adminNombre)}</p>
             </div>
         `;
     });
