@@ -606,6 +606,27 @@ async function actualizarPanelJugador() {
     actualizandoJugador = false;
 }
 
+function abrirChatFlotante(){
+    const chatFlotante = document.getElementById("chatFlotante");
+    const chatOverlay = document.getElementById("chatOverlay");
+
+    if (chatFlotante) chatFlotante.classList.add("abierto");
+    if (chatOverlay) chatOverlay.classList.add("activo");
+
+    setTimeout(() => {
+        const lista = document.getElementById("listaChat");
+        if (lista) lista.scrollTop = lista.scrollHeight;
+    }, 100);
+}
+
+function cerrarChatFlotanteFn(){
+    const chatFlotante = document.getElementById("chatFlotante");
+    const chatOverlay = document.getElementById("chatOverlay");
+
+    if (chatFlotante) chatFlotante.classList.remove("abierto");
+    if (chatOverlay) chatOverlay.classList.remove("activo");
+}
+
 document
 .getElementById("btnVolver")
 .addEventListener("click", () => {
@@ -630,6 +651,18 @@ document
         await enviarMensajeChat();
     }
 });
+
+document
+.getElementById("chatFloatBtn")
+.addEventListener("click", abrirChatFlotante);
+
+document
+.getElementById("cerrarChatBtn")
+.addEventListener("click", cerrarChatFlotanteFn);
+
+document
+.getElementById("chatOverlay")
+.addEventListener("click", cerrarChatFlotanteFn);
 
 setInterval(async () => {
     await actualizarPanelJugador();
