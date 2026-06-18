@@ -12,6 +12,10 @@ let actualizandoJugador = false;
 let youtubeActual = "";
 let cuentaExpulsada = false;
 
+let ultimoChatIdVisto = 0;
+let contadorMensajesNuevos = 0;
+let chatInicializado = false;
+
 function escaparHTML(texto) {
     return String(texto || "")
         .replaceAll("&", "&amp;")
@@ -253,6 +257,25 @@ async function cargarPeleas() {
     });
 }
 
+function chatEstaAbierto() {
+    const chatFlotante = document.getElementById("chatFlotante");
+    return chatFlotante && chatFlotante.classList.contains("abierto");
+}
+
+function actualizarContadorChat() {
+    const contador = document.getElementById("contadorChat");
+
+    if (!contador) return;
+
+    if (contadorMensajesNuevos > 0) {
+        contador.innerText = contadorMensajesNuevos > 99 ? "99+" : contadorMensajesNuevos;
+        contador.classList.add("visible");
+    } else {
+        contador.innerText = "0";
+        contador.classList.remove("visible");
+    }
+}
+
 async function cargarChat() {
     const lista = document.getElementById("listaChat");
     const estadoChat = document.getElementById("estadoChat");
@@ -290,6 +313,30 @@ async function cargarChat() {
     lista.innerHTML = "";
 
     const ordenados = (mensajes || []).reverse();
+
+    const mensajesRecibidos = mensajes || [];
+    const maxIdChat = mensajesRecibidos.length
+        ? Math.max(...mensajesRecibidos.map(m => Number(m.id || 0)))
+        : 0;
+
+    if (!chatInicializado) {
+        ultimoChatIdVisto = maxIdChat;
+        chatInicializado = true;
+        actualizarContadorChat();
+    } else if (chatEstaAbierto()) {
+        ultimoChatIdVisto = maxIdChat;
+        contadorMensajesNuevos = 0;
+        actualizarContadorChat();
+    } else if (maxIdChat > ultimoChatIdVisto) {
+        const nuevos = mensajesRecibidos.filter(msg =>
+            Number(msg.id || 0) > ultimoChatIdVisto &&
+            msg.jugador_id !== jugadorActual.id
+        );
+
+        contadorMensajesNuevos += nuevos.length;
+        ultimoChatIdVisto = maxIdChat;
+        actualizarContadorChat();
+    }
 
     if (!ordenados.length) {
         lista.innerHTML = "<p>No hay mensajes todavía.</p>";
@@ -609,6 +656,9 @@ async function actualizarPanelJugador() {
 function abrirChatFlotante(){
     const chatFlotante = document.getElementById("chatFlotante");
     const chatOverlay = document.getElementById("chatOverlay");
+
+    contadorMensajesNuevos = 0;
+    actualizarContadorChat();
 
     if (chatFlotante) chatFlotante.classList.add("abierto");
     if (chatOverlay) chatOverlay.classList.add("activo");
