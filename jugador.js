@@ -25,6 +25,15 @@ function escaparHTML(texto) {
         .replaceAll("'", "&#039;");
 }
 
+function formatearDinero(valor) {
+    const numero = Number(valor || 0);
+
+    return numero.toLocaleString("es-MX", {
+        style: "currency",
+        currency: "MXN"
+    });
+}
+
 async function expulsarUsuario(mensajeTexto) {
     if (cuentaExpulsada) return;
 
@@ -193,6 +202,110 @@ function cargarVideoYoutube() {
     `;
 }
 
+async function obtenerResumenMercado(peleaIds) {
+    const resumen = {};
+
+    peleaIds.forEach(id => {
+        resumen[id] = {
+            normal_rojo: 0,
+            normal_verde: 0,
+            doy80_rojo: 0,
+            doy80_verde: 0,
+            agarro80_rojo: 0,
+            agarro80_verde: 0
+        };
+    });
+
+    if (!peleaIds.length) {
+        return resumen;
+    }
+
+    const { data: apuestas, error } = await supabaseClient
+        .from("apuestas")
+        .select(`
+            pelea_id,
+            color,
+            tipo_apuesta,
+            cantidad_nominal_pendiente,
+            cantidad_pendiente,
+            estado
+        `)
+        .in("pelea_id", peleaIds)
+        .in("estado", ["pendiente", "parcial"]);
+
+    if (error) {
+        console.error("Error cargando resumen de mercado:", error.message);
+        return resumen;
+    }
+
+    (apuestas || []).forEach(apuesta => {
+        const peleaId = apuesta.pelea_id;
+        const color = apuesta.color || "";
+        const tipo = apuesta.tipo_apuesta || "normal";
+        const pendiente = Number(
+            apuesta.cantidad_nominal_pendiente ??
+            apuesta.cantidad_pendiente ??
+            0
+        );
+
+        if (!resumen[peleaId] || pendiente <= 0) return;
+
+        const clave = `${tipo}_${color}`;
+
+        if (resumen[peleaId][clave] !== undefined) {
+            resumen[peleaId][clave] += pendiente;
+        }
+    });
+
+    return resumen;
+}
+
+function crearResumenMercadoHTML(datos) {
+    return `
+        <div class="mercado-panel">
+
+            <div class="mercado-titulo">Mercado normal disponible</div>
+
+            <div class="mercado-grid">
+                <div class="mercado-box mercado-rojo">
+                    <span>ROJO</span>
+                    <strong>${formatearDinero(datos.normal_rojo)}</strong>
+                </div>
+
+                <div class="mercado-box mercado-verde">
+                    <span>VERDE</span>
+                    <strong>${formatearDinero(datos.normal_verde)}</strong>
+                </div>
+            </div>
+
+            <div class="mercado-titulo mercado-titulo-80">Mercado a 80 disponible</div>
+
+            <div class="mercado-80-grid">
+                <div class="mercado-box mercado-rojo">
+                    <span>ROJO DOY 80</span>
+                    <strong>${formatearDinero(datos.doy80_rojo)}</strong>
+                </div>
+
+                <div class="mercado-box mercado-verde">
+                    <span>VERDE AGARRO 80</span>
+                    <strong>${formatearDinero(datos.agarro80_verde)}</strong>
+                </div>
+
+                <div class="mercado-box mercado-verde">
+                    <span>VERDE DOY 80</span>
+                    <strong>${formatearDinero(datos.doy80_verde)}</strong>
+                </div>
+
+                <div class="mercado-box mercado-rojo">
+                    <span>ROJO AGARRO 80</span>
+                    <strong>${formatearDinero(datos.agarro80_rojo)}</strong>
+                </div>
+            </div>
+
+        </div>
+    `;
+}
+
 async function cargarPeleas() {
     const lista = document.getElementById("listaPeleas");
 
@@ -225,17 +338,40 @@ async function cargarPeleas() {
         return;
     }
 
+    const peleaIds = peleas.map(pelea => pelea.id);
+    const resumenMercado = await obtenerResumenMercado(peleaIds);
+
     peleas.forEach(pelea => {
         const numero = pelea.numero_derby || pelea.id;
+        const resumen = resumenMercado[pelea.id] || {
+            normal_rojo: 0,
+            normal_verde: 0,
+            doy80_rojo: 0,
+            doy80_verde: 0,
+            agarro80_rojo: 0,
+            agarro80_verde: 0
+        };
 
         lista.innerHTML += `
-            <div class="pelea-card">
+            <div class="pelea-card pelea-apuesta-card">
                 <h3>Pelea #${escaparHTML(numero)}</h3>
 
                 <p><strong>Derby:</strong> ${escaparHTML(derbyActivo.nombre)}</p>
                 <p><strong>Zona:</strong> ${escaparHTML(pelea.zona)}</p>
-                <p><strong>ROJO:</strong> ${escaparHTML(pelea.gallo_rojo)}</p>
-                <p><strong>VERDE:</strong> ${escaparHTML(pelea.gallo_verde)}</p>
+
+                <div class="peleadores-grid">
+                    <div class="peleador-box peleador-rojo">
+                        <span>ROJO</span>
+                        <strong>${escaparHTML(pelea.gallo_rojo)}</strong>
+                    </div>
+
+                    <div class="peleador-box peleador-verde">
+                        <span>VERDE</span>
+                        <strong>${escaparHTML(pelea.gallo_verde)}</strong>
+                    </div>
+                </div>
+
+                ${crearResumenMercadoHTML(resumen)}
 
                 <input
                     type="number"
@@ -243,13 +379,59 @@ async function cargarPeleas() {
                     placeholder="Cantidad"
                 >
 
-                <button onclick="apostar(${pelea.id}, 'rojo')">
-                    Apostar ROJO
-                </button>
+                <div class="apuestas-grid">
 
-                <button onclick="apostar(${pelea.id}, 'verde')">
-                    Apostar VERDE
-                </button>
+                    <div class="apuesta-lado apuesta-lado-rojo">
+                        <button
+                            class="btn-apuesta-principal btn-rojo"
+                            onclick="apostar(${pelea.id}, 'rojo', 'normal')"
+                        >
+                            Apostar ROJO
+                        </button>
+
+                        <div class="apuesta-80-row">
+                            <button
+                                class="btn-apuesta-mini btn-rojo"
+                                onclick="apostar(${pelea.id}, 'rojo', 'doy80')"
+                            >
+                                DOY 80
+                            </button>
+
+                            <button
+                                class="btn-apuesta-mini btn-rojo"
+                                onclick="apostar(${pelea.id}, 'rojo', 'agarro80')"
+                            >
+                                AGARRO 80
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="apuesta-lado apuesta-lado-verde">
+                        <button
+                            class="btn-apuesta-principal btn-verde"
+                            onclick="apostar(${pelea.id}, 'verde', 'normal')"
+                        >
+                            Apostar VERDE
+                        </button>
+
+                        <div class="apuesta-80-row">
+                            <button
+                                class="btn-apuesta-mini btn-verde"
+                                onclick="apostar(${pelea.id}, 'verde', 'doy80')"
+                            >
+                                DOY 80
+                            </button>
+
+                            <button
+                                class="btn-apuesta-mini btn-verde"
+                                onclick="apostar(${pelea.id}, 'verde', 'agarro80')"
+                            >
+                                AGARRO 80
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
 
                 <p id="mensaje-pelea-${pelea.id}"></p>
             </div>
@@ -461,31 +643,44 @@ async function cargarHistorialApuestas() {
         const numeroPelea = pelea?.numero_derby || pelea?.id || apuesta.pelea_id;
         const color = apuesta.color || "";
         const estado = apuesta.estado || "pendiente";
-        const total = Number(apuesta.cantidad_total || apuesta.cantidad || 0);
-        const matcheada = Number(apuesta.cantidad_matcheada || 0);
-        const pendiente = Number(apuesta.cantidad_pendiente || 0);
+
+        const tipoApuesta = apuesta.tipo_apuesta || "normal";
+
+        const total = Number(apuesta.cantidad_nominal || apuesta.cantidad_total || apuesta.cantidad || 0);
+        const riesgo = Number(apuesta.cantidad_riesgo || total);
+        const matcheada = Number(apuesta.cantidad_nominal_matcheada || apuesta.cantidad_matcheada || 0);
+        const pendiente = Number(apuesta.cantidad_nominal_pendiente || apuesta.cantidad_pendiente || 0);
         const ganancia = Number(apuesta.ganancia || 0);
         const comision = Number(apuesta.comision || 0);
 
         let estadoTexto = estado;
         let totalCobrado = 0;
         let desglose = "";
+        let tipoTexto = "Normal";
+
+        if (tipoApuesta === "doy80") {
+            tipoTexto = "DOY a 80";
+        }
+
+        if (tipoApuesta === "agarro80") {
+            tipoTexto = "AGARRO a 80";
+        }
 
         if (estado === "ganada") {
-            totalCobrado = matcheada + ganancia;
+            totalCobrado = riesgo + ganancia;
             estadoTexto = "GANADA ✅";
-            desglose = `$${matcheada} apuesta + $${ganancia} ganancia`;
+            desglose = `$${riesgo} riesgo regresado + $${ganancia} ganancia neta`;
         } else if (estado === "perdida") {
             estadoTexto = "PERDIDA ❌";
             desglose = "No hubo cobro";
         } else if (estado === "tablas") {
-            totalCobrado = matcheada;
+            totalCobrado = riesgo;
             estadoTexto = "TABLAS 🤝";
-            desglose = "Apuesta devuelta";
+            desglose = "Riesgo devuelto";
         } else if (estado === "cancelada") {
-            totalCobrado = matcheada;
+            totalCobrado = riesgo;
             estadoTexto = "CANCELADA ⚠️";
-            desglose = "Apuesta devuelta";
+            desglose = "Riesgo devuelto";
         } else if (estado === "devuelta") {
             totalCobrado = pendiente;
             estadoTexto = "DEVUELTA";
@@ -500,17 +695,19 @@ async function cargarHistorialApuestas() {
                 <p><strong>ROJO:</strong> ${escaparHTML(pelea?.gallo_rojo || "-")}</p>
                 <p><strong>VERDE:</strong> ${escaparHTML(pelea?.gallo_verde || "-")}</p>
 
+                <p><strong>Tipo:</strong> ${escaparHTML(tipoTexto)}</p>
                 <p><strong>Mi color:</strong> ${escaparHTML(color.toUpperCase())}</p>
-                <p><strong>Aposté:</strong> $${escaparHTML(total)}</p>
-                <p><strong>Casado:</strong> $${escaparHTML(matcheada)}</p>
-                <p><strong>Pendiente:</strong> $${escaparHTML(pendiente)}</p>
+                <p><strong>Apuesta nominal:</strong> ${formatearDinero(total)}</p>
+                <p><strong>Riesgo real:</strong> ${formatearDinero(riesgo)}</p>
+                <p><strong>Casado nominal:</strong> ${formatearDinero(matcheada)}</p>
+                <p><strong>Pendiente nominal:</strong> ${formatearDinero(pendiente)}</p>
 
                 <p><strong>Estado:</strong> ${escaparHTML(estadoTexto)}</p>
 
-                <p><strong>Ganancia neta:</strong> $${escaparHTML(ganancia)}</p>
-                <p><strong>Comisión:</strong> $${escaparHTML(comision)}</p>
+                <p><strong>Ganancia neta:</strong> ${formatearDinero(ganancia)}</p>
+                <p><strong>Comisión:</strong> ${formatearDinero(comision)}</p>
 
-                <p><strong>Total cobrado:</strong> $${escaparHTML(totalCobrado)}</p>
+                <p><strong>Total cobrado:</strong> ${formatearDinero(totalCobrado)}</p>
                 <p><strong>Desglose:</strong> ${escaparHTML(desglose)}</p>
             </div>
         `;
@@ -584,7 +781,7 @@ async function cargarMovimientos() {
     });
 }
 
-async function apostar(peleaId, color) {
+async function apostar(peleaId, color, tipoApuesta = "normal") {
     const input = document.getElementById(`monto-pelea-${peleaId}`);
     const mensaje = document.getElementById(`mensaje-pelea-${peleaId}`);
 
@@ -600,6 +797,25 @@ async function apostar(peleaId, color) {
         return;
     }
 
+    let tipoTexto = "normal";
+    let riesgoTexto = "";
+
+    if (tipoApuesta === "doy80") {
+        tipoTexto = "DOY a 80";
+        riesgoTexto = `Arriesgas ${formatearDinero(cantidad)}. Si ganas, tu ganancia bruta será ${formatearDinero(cantidad * 0.80)} menos comisión.`;
+    } else if (tipoApuesta === "agarro80") {
+        tipoTexto = "AGARRO a 80";
+        riesgoTexto = `Apuestas nominalmente ${formatearDinero(cantidad)}, pero solo arriesgas ${formatearDinero(cantidad * 0.80)}. Si ganas, tu ganancia bruta será ${formatearDinero(cantidad)} menos comisión.`;
+    } else {
+        riesgoTexto = `Apuesta normal por ${formatearDinero(cantidad)}.`;
+    }
+
+    const confirmar = confirm(
+        `Confirmar apuesta ${tipoTexto.toUpperCase()} al ${color.toUpperCase()}\n\n${riesgoTexto}`
+    );
+
+    if (!confirmar) return;
+
     mensaje.innerText = "Procesando apuesta...";
 
     const { data, error } = await supabaseClient.rpc(
@@ -607,7 +823,8 @@ async function apostar(peleaId, color) {
         {
             p_pelea_id: peleaId,
             p_color: color,
-            p_cantidad: cantidad
+            p_cantidad: cantidad,
+            p_tipo_apuesta: tipoApuesta
         }
     );
 
