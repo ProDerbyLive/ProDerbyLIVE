@@ -192,24 +192,30 @@ function cargarVideoYoutube() {
     if (!contenedor) return;
 
     if (!derbyActivo || !derbyActivo.youtube_url) {
+        if (youtubeActual === "sin-video") return;
+
+        youtubeActual = "sin-video";
+
         contenedor.innerHTML = `
             <div class="pelea-card">
                 <p>No hay transmisión configurada.</p>
             </div>
         `;
-        youtubeActual = "";
         return;
     }
 
     const embedUrl = obtenerYoutubeEmbed(derbyActivo.youtube_url);
 
     if (!embedUrl) {
+        if (youtubeActual === "link-invalido") return;
+
+        youtubeActual = "link-invalido";
+
         contenedor.innerHTML = `
             <div class="pelea-card">
                 <p>Link de YouTube inválido.</p>
             </div>
         `;
-        youtubeActual = "";
         return;
     }
 
@@ -814,7 +820,7 @@ function mostrarTabJugador(tabId) {
     }
 
     if (tabId === "tabApuestas") {
-        actualizarDerbyVideoYPeleas();
+        cargarPeleas();
     }
 }
 
@@ -881,8 +887,5 @@ document
 
 setInterval(cargarChat, 3000);
 setInterval(actualizarSaldoYEstado, 5000);
-setInterval(actualizarDerbyVideoYPeleas, 7000);
-setInterval(cargarHistorialApuestas, 15000);
-setInterval(cargarMovimientos, 15000);
 
 cargarJugador();
