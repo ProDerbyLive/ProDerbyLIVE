@@ -8,9 +8,12 @@ const supabaseClient = supabase.createClient(
 
 let jugadorActual = null;
 let derbyActivo = null;
-let actualizandoJugador = false;
 let youtubeActual = "";
 let cuentaExpulsada = false;
+
+let actualizandoPeleas = false;
+let actualizandoChat = false;
+let actualizandoSaldo = false;
 
 let ultimoChatIdVisto = 0;
 let contadorMensajesNuevos = 0;
@@ -116,6 +119,34 @@ async function cargarJugador() {
     await cargarMovimientos();
 }
 
+async function actualizarSaldoYEstado() {
+    if (!jugadorActual || actualizandoSaldo || cuentaExpulsada) return;
+
+    actualizandoSaldo = true;
+
+    const { data: perfil, error } = await supabaseClient
+        .from("perfiles")
+        .select("*")
+        .eq("id", jugadorActual.id)
+        .single();
+
+    if (!error && perfil) {
+        const cuentaValida = await validarEstadoCuenta(perfil);
+
+        if (cuentaValida) {
+            jugadorActual = perfil;
+
+            const saldo = document.getElementById("usuarioSaldo");
+            const nombre = document.getElementById("usuarioNombre");
+
+            if (saldo) saldo.innerText = perfil.saldo || 0;
+            if (nombre) nombre.innerText = perfil.usuario || perfil.id;
+        }
+    }
+
+    actualizandoSaldo = false;
+}
+
 async function cargarDerbyActivo() {
     const { data, error } = await supabaseClient
         .from("derbys")
@@ -202,115 +233,32 @@ function cargarVideoYoutube() {
     `;
 }
 
-async function obtenerResumenMercado(peleaIds) {
-    const resumen = {};
+function usuarioEstaEscribiendoApuesta() {
+    const elementoActivo = document.activeElement;
 
-    peleaIds.forEach(id => {
-        resumen[id] = {
-            normal_rojo: 0,
-            normal_verde: 0,
-            doy80_rojo: 0,
-            doy80_verde: 0,
-            agarro80_rojo: 0,
-            agarro80_verde: 0
-        };
-    });
-
-    if (!peleaIds.length) {
-        return resumen;
-    }
-
-    const { data: apuestas, error } = await supabaseClient
-        .from("apuestas")
-        .select(`
-            pelea_id,
-            color,
-            tipo_apuesta,
-            cantidad_nominal_pendiente,
-            cantidad_pendiente,
-            estado
-        `)
-        .in("pelea_id", peleaIds)
-        .in("estado", ["pendiente", "parcial"]);
-
-    if (error) {
-        console.error("Error cargando resumen de mercado:", error.message);
-        return resumen;
-    }
-
-    (apuestas || []).forEach(apuesta => {
-        const peleaId = apuesta.pelea_id;
-        const color = apuesta.color || "";
-        const tipo = apuesta.tipo_apuesta || "normal";
-        const pendiente = Number(
-            apuesta.cantidad_nominal_pendiente ??
-            apuesta.cantidad_pendiente ??
-            0
-        );
-
-        if (!resumen[peleaId] || pendiente <= 0) return;
-
-        const clave = `${tipo}_${color}`;
-
-        if (resumen[peleaId][clave] !== undefined) {
-            resumen[peleaId][clave] += pendiente;
-        }
-    });
-
-    return resumen;
-}
-
-function crearResumenMercadoHTML(datos) {
-    return `
-        <div class="mercado-panel">
-
-            <div class="mercado-titulo">Mercado normal disponible</div>
-
-            <div class="mercado-grid">
-                <div class="mercado-box mercado-rojo">
-                    <span>ROJO</span>
-                    <strong>${formatearDinero(datos.normal_rojo)}</strong>
-                </div>
-
-                <div class="mercado-box mercado-verde">
-                    <span>VERDE</span>
-                    <strong>${formatearDinero(datos.normal_verde)}</strong>
-                </div>
-            </div>
-
-            <div class="mercado-titulo mercado-titulo-80">Mercado a 80 disponible</div>
-
-            <div class="mercado-80-grid">
-                <div class="mercado-box mercado-rojo">
-                    <span>ROJO DOY 80</span>
-                    <strong>${formatearDinero(datos.doy80_rojo)}</strong>
-                </div>
-
-                <div class="mercado-box mercado-verde">
-                    <span>VERDE AGARRO 80</span>
-                    <strong>${formatearDinero(datos.agarro80_verde)}</strong>
-                </div>
-
-                <div class="mercado-box mercado-verde">
-                    <span>VERDE DOY 80</span>
-                    <strong>${formatearDinero(datos.doy80_verde)}</strong>
-                </div>
-
-                <div class="mercado-box mercado-rojo">
-                    <span>ROJO AGARRO 80</span>
-                    <strong>${formatearDinero(datos.agarro80_rojo)}</strong>
-                </div>
-            </div>
-
-        </div>
-    `;
+    return (
+        elementoActivo &&
+        elementoActivo.tagName === "INPUT" &&
+        elementoActivo.id &&
+        elementoActivo.id.startsWith("monto-pelea-")
+    );
 }
 
 async function cargarPeleas() {
+    if (actualizandoPeleas || usuarioEstaEscribiendoApuesta()) return;
+
+    actualizandoPeleas = true;
+
     const lista = document.getElementById("listaPeleas");
+
+    if (!lista) {
+        actualizandoPeleas = false;
+        return;
+    }
 
     if (!derbyActivo) {
         lista.innerHTML = "No hay derby activo.";
+        actualizandoPeleas = false;
         return;
     }
 
@@ -323,6 +271,7 @@ async function cargarPeleas() {
 
     if (error) {
         lista.innerHTML = "Error cargando peleas.";
+        actualizandoPeleas = false;
         return;
     }
 
@@ -335,22 +284,12 @@ async function cargarPeleas() {
 
     if (!peleas.length) {
         lista.innerHTML += "<p>No hay peleas abiertas.</p>";
+        actualizandoPeleas = false;
         return;
     }
 
-    const peleaIds = peleas.map(pelea => pelea.id);
-    const resumenMercado = await obtenerResumenMercado(peleaIds);
-
     peleas.forEach(pelea => {
         const numero = pelea.numero_derby || pelea.id;
-        const resumen = resumenMercado[pelea.id] || {
-            normal_rojo: 0,
-            normal_verde: 0,
-            doy80_rojo: 0,
-            doy80_verde: 0,
-            agarro80_rojo: 0,
-            agarro80_verde: 0
-        };
 
         lista.innerHTML += `
             <div class="pelea-card pelea-apuesta-card">
@@ -370,8 +309,6 @@ async function cargarPeleas() {
                         <strong>${escaparHTML(pelea.gallo_verde)}</strong>
                     </div>
                 </div>
-
-                ${crearResumenMercadoHTML(resumen)}
 
                 <input
                     type="number"
@@ -437,6 +374,16 @@ async function cargarPeleas() {
             </div>
         `;
     });
+
+    actualizandoPeleas = false;
+}
+
+async function actualizarDerbyVideoYPeleas() {
+    if (usuarioEstaEscribiendoApuesta()) return;
+
+    await cargarDerbyActivo();
+    cargarVideoYoutube();
+    await cargarPeleas();
 }
 
 function chatEstaAbierto() {
@@ -459,14 +406,19 @@ function actualizarContadorChat() {
 }
 
 async function cargarChat() {
+    if (actualizandoChat || !jugadorActual) return;
+
+    actualizandoChat = true;
+
     const lista = document.getElementById("listaChat");
     const estadoChat = document.getElementById("estadoChat");
     const input = document.getElementById("mensajeChat");
     const boton = document.getElementById("btnEnviarChat");
 
-    if (!lista || !estadoChat || !input || !boton) return;
-
-    if (!jugadorActual) return;
+    if (!lista || !estadoChat || !input || !boton) {
+        actualizandoChat = false;
+        return;
+    }
 
     const estabaAbajo =
         lista.scrollTop + lista.clientHeight >= lista.scrollHeight - 50;
@@ -489,6 +441,7 @@ async function cargarChat() {
     if (error) {
         lista.innerHTML = "Error cargando chat.";
         console.error("Error cargando chat jugador:", error.message);
+        actualizandoChat = false;
         return;
     }
 
@@ -522,6 +475,7 @@ async function cargarChat() {
 
     if (!ordenados.length) {
         lista.innerHTML = "<p>No hay mensajes todavía.</p>";
+        actualizandoChat = false;
         return;
     }
 
@@ -549,6 +503,8 @@ async function cargarChat() {
     if (estabaAbajo) {
         lista.scrollTop = lista.scrollHeight;
     }
+
+    actualizandoChat = false;
 }
 
 async function enviarMensajeChat() {
@@ -669,7 +625,7 @@ async function cargarHistorialApuestas() {
         if (estado === "ganada") {
             totalCobrado = riesgo + ganancia;
             estadoTexto = "GANADA ✅";
-            desglose = `$${riesgo} riesgo regresado + $${ganancia} ganancia neta`;
+            desglose = `${formatearDinero(riesgo)} riesgo regresado + ${formatearDinero(ganancia)} ganancia neta`;
         } else if (estado === "perdida") {
             estadoTexto = "PERDIDA ❌";
             desglose = "No hubo cobro";
@@ -836,7 +792,10 @@ async function apostar(peleaId, color, tipoApuesta = "normal") {
     mensaje.innerText = data;
     input.value = "";
 
-    await cargarJugador();
+    await actualizarSaldoYEstado();
+    await cargarPeleas();
+    await cargarHistorialApuestas();
+    await cargarMovimientos();
 }
 
 function mostrarTabJugador(tabId) {
@@ -845,29 +804,18 @@ function mostrarTabJugador(tabId) {
     });
 
     document.getElementById(tabId).style.display = "block";
-}
 
-async function actualizarPanelJugador() {
-    if (actualizandoJugador || cuentaExpulsada) {
-        return;
+    if (tabId === "tabHistorial") {
+        cargarHistorialApuestas();
     }
 
-    const elementoActivo = document.activeElement;
-
-    if (
-        elementoActivo &&
-        elementoActivo.tagName === "INPUT" &&
-        elementoActivo.id &&
-        elementoActivo.id.startsWith("monto-pelea-")
-    ) {
-        return;
+    if (tabId === "tabMovimientos") {
+        cargarMovimientos();
     }
 
-    actualizandoJugador = true;
-
-    await cargarJugador();
-
-    actualizandoJugador = false;
+    if (tabId === "tabApuestas") {
+        actualizarDerbyVideoYPeleas();
+    }
 }
 
 function abrirChatFlotante(){
@@ -931,8 +879,10 @@ document
 .getElementById("chatOverlay")
 .addEventListener("click", cerrarChatFlotanteFn);
 
-setInterval(async () => {
-    await actualizarPanelJugador();
-}, 3000);
+setInterval(cargarChat, 3000);
+setInterval(actualizarSaldoYEstado, 5000);
+setInterval(actualizarDerbyVideoYPeleas, 7000);
+setInterval(cargarHistorialApuestas, 15000);
+setInterval(cargarMovimientos, 15000);
 
 cargarJugador();
