@@ -750,11 +750,14 @@ const notaMostrar =
                 <p><strong>Saldo nuevo:</strong> $${escaparHTML(mov.saldo_nuevo || 0)}</p>
 
                 <p><strong>Nota:</strong> ${escaparHTML(notaMostrar)}</p>
-                ${
-    mov.nota
-    ? `<p><strong>Autorizado por:</strong> ${escaparHTML(mov.nota.replace("Saldo agregado por ", "").replace("Saldo retirado por ", ""))}</p>`
-    : ""
-}
+                <p><strong>Autorizado por:</strong> ${escaparHTML(
+                   (mov.nota || "")
+                       .replace("Saldo agregado por ", "")
+                       .replace("Saldo retirado por ", "")
+                       .replace("Saldro agregado por ", "")
+                       .replace("Saldro retirado por ", "")
+                       .trim() || adminNombre
+                )}</p>
             </div>
         `;
     });
