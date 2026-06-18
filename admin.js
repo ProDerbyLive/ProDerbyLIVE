@@ -698,16 +698,18 @@ async function modificarSaldo(jugadorId, cambio, tipo) {
     adminActualPerfil?.nombre ||
     "Administrador";
 
-    const { error: errorMovimiento } = await supabaseClient.from("movimientos").insert({
-        jugador_id: jugadorId,
-        tipo: tipo,
-        cantidad: Math.abs(cambio),
-        estado: "aprobado",
-        nota: cambio > 0 ? "Saldo agregado por admin" : "Saldo retirado por admin",
-        saldo_anterior: saldoAnterior,
-        saldo_nuevo: saldoNuevo,
-        admin_id: adminActualId
-    });
+const { error: errorMovimiento } = await supabaseClient.from("movimientos").insert({
+    jugador_id: jugadorId,
+    tipo: tipo,
+    cantidad: Math.abs(cambio),
+    estado: "aprobado",
+    nota: cambio > 0
+        ? `Saldo agregado por ${nombreAdmin}`
+        : `Saldo retirado por ${nombreAdmin}`,
+    saldo_anterior: saldoAnterior,
+    saldo_nuevo: saldoNuevo,
+    admin_id: adminActualId
+});
 
     if (errorMovimiento) {
         alert("Saldo actualizado, pero no se pudo registrar el movimiento: " + errorMovimiento.message);
