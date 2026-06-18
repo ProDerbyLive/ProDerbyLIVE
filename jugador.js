@@ -726,10 +726,17 @@ async function cargarMovimientos() {
                 ? "Depósito aprobado"
                 : "Retiro aprobado";
 
-        const notaMostrar =
+        const notaOriginal = mov.nota || "";
+
+const notaMostrar =
+    notaOriginal &&
+    !notaOriginal.includes("por admin")
+        ? notaOriginal
+        : (
             mov.tipo === "admin_agrega_saldo"
                 ? `Saldo agregado por ${adminNombre}`
-                : `Saldo retirado por ${adminNombre}`;
+                : `Saldo retirado por ${adminNombre}`
+        );
 
         contenedor.innerHTML += `
             <div class="pelea-card">
