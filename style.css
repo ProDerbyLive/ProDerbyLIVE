@@ -980,3 +980,50 @@ body:has(.acceso-contenedor)::before{
         height:68px;
     }
 }
+.chat-contador{
+    position:absolute;
+    top:-4px;
+    right:-4px;
+
+    min-width:24px;
+    height:24px;
+
+    padding:0 7px;
+
+    border-radius:999px;
+
+    background:linear-gradient(135deg, #ff0033, #b00018);
+    color:#fff;
+
+    font-size:12px;
+    font-weight:900;
+
+    display:none;
+    align-items:center;
+    justify-content:center;
+
+    border:2px solid #fff;
+
+    box-shadow:
+        0 0 12px rgba(255,0,51,.75),
+        0 0 28px rgba(255,0,51,.35);
+
+    z-index:10001;
+}
+
+.chat-contador.visible{
+    display:flex;
+    animation:pulseChatBadge 1.2s infinite;
+}
+
+@keyframes pulseChatBadge{
+    0%{
+        transform:scale(1);
+    }
+    50%{
+        transform:scale(1.12);
+    }
+    100%{
+        transform:scale(1);
+    }
+}
