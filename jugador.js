@@ -689,7 +689,8 @@ async function cargarMovimientos() {
         .select(`
             *,
             admin:admin_id (
-                usuario
+                usuario,
+                nombre
             )
         `)
         .eq("jugador_id", jugadorActual.id)
@@ -709,16 +710,26 @@ async function cargarMovimientos() {
     }
 
     movimientos.forEach(mov => {
-        const adminNombre = mov.admin?.usuario || "";
+        const adminNombre =
+            mov.admin?.usuario ||
+            mov.admin?.nombre ||
+            "Administrador";
+
         const signo = mov.tipo === "admin_agrega_saldo" ? "+" : "-";
+
         const fecha = mov.creado_en
             ? new Date(mov.creado_en).toLocaleString("es-MX")
             : "";
 
         const tipoTexto =
             mov.tipo === "admin_agrega_saldo"
-            ? "Depósito aprobado"
-            : "Retiro aprobado";
+                ? "Depósito aprobado"
+                : "Retiro aprobado";
+
+        const notaMostrar =
+            mov.tipo === "admin_agrega_saldo"
+                ? `Saldo agregado por ${adminNombre}`
+                : `Saldo retirado por ${adminNombre}`;
 
         contenedor.innerHTML += `
             <div class="pelea-card">
@@ -731,13 +742,8 @@ async function cargarMovimientos() {
                 <p><strong>Saldo anterior:</strong> $${escaparHTML(mov.saldo_anterior || 0)}</p>
                 <p><strong>Saldo nuevo:</strong> $${escaparHTML(mov.saldo_nuevo || 0)}</p>
 
-                <p><strong>Nota:</strong> ${escaparHTML(mov.nota || "-")}</p>
-
-                ${
-                    adminNombre
-                    ? `<p><strong>Admin:</strong> ${escaparHTML(adminNombre)}</p>`
-                    : ""
-                }
+                <p><strong>Nota:</strong> ${escaparHTML(notaMostrar)}</p>
+                <p><strong>Admin:</strong> ${escaparHTML(adminNombre)}</p>
             </div>
         `;
     });
