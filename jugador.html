@@ -44,29 +44,11 @@
 
                 <div id="tabApuestas" class="tab-contenido">
 
-                    <div class="transmision-layout">
+                    <div class="transmision-layout jugador-video-layout">
 
                         <div class="video-columna">
                             <h2>Transmisión en vivo</h2>
                             <div id="videoYoutube"></div>
-                        </div>
-
-                        <div class="chat-columna">
-                            <h2>Chat en vivo</h2>
-
-                            <div id="listaChat"></div>
-
-                            <input
-                                type="text"
-                                id="mensajeChat"
-                                placeholder="Escribe un mensaje..."
-                            >
-
-                            <button id="btnEnviarChat">
-                                Enviar
-                            </button>
-
-                            <p id="estadoChat"></p>
                         </div>
 
                     </div>
@@ -85,6 +67,45 @@
                 <div id="tabMovimientos" class="tab-contenido" style="display:none;">
                     <h2>Movimientos</h2>
                     <div id="listaMovimientos"></div>
+                </div>
+
+                <div id="chatOverlay" class="chat-overlay"></div>
+
+                <button id="chatFloatBtn" class="chat-float-btn" type="button">
+                    💬
+                </button>
+
+                <div id="chatFlotante" class="chat-flotante">
+
+                    <div class="chat-header">
+                        <div>
+                            <strong>Chat en vivo</strong>
+                            <span>ProDerbyLIVE</span>
+                        </div>
+
+                        <button
+                            type="button"
+                            id="cerrarChatBtn"
+                            class="chat-close-btn"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    <div id="listaChat"></div>
+
+                    <input
+                        type="text"
+                        id="mensajeChat"
+                        placeholder="Escribe un mensaje..."
+                    >
+
+                    <button id="btnEnviarChat">
+                        Enviar
+                    </button>
+
+                    <p id="estadoChat"></p>
+
                 </div>
 
                 <hr>
