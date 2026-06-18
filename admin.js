@@ -693,6 +693,10 @@ async function modificarSaldo(jugadorId, cambio, tipo) {
         alert("Error al actualizar saldo: " + errorActualizar.message);
         return;
     }
+    const nombreAdmin =
+    adminActualPerfil?.usuario ||
+    adminActualPerfil?.nombre ||
+    "Administrador";
 
     const { error: errorMovimiento } = await supabaseClient.from("movimientos").insert({
         jugador_id: jugadorId,
