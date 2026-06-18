@@ -76,7 +76,7 @@ body{
     position:absolute;
     right:35px;
     top:35px;
-    width:360px;
+    width:410px;
     background:rgba(0,0,0,.88);
     border:3px solid #d4af37;
     border-radius:20px;
@@ -113,15 +113,34 @@ body{
     padding:13px 10px 5px;
 }
 
+.bloqueTitulo{
+    margin:12px 16px 4px;
+    padding:7px 10px;
+    border:1px solid rgba(212,175,55,.65);
+    border-radius:10px;
+    color:#d4af37;
+    font-size:15px;
+    font-weight:bold;
+    letter-spacing:1.5px;
+    text-align:center;
+    background:rgba(212,175,55,.08);
+}
+
 .filaApuesta{
     display:flex;
     justify-content:space-between;
     align-items:center;
-    margin:10px 16px;
-    padding:12px 14px;
+    margin:8px 16px;
+    padding:10px 13px;
     border-radius:12px;
-    font-size:24px;
+    font-size:22px;
     font-weight:bold;
+}
+
+.filaApuestaMini{
+    font-size:17px;
+    padding:8px 12px;
+    margin:6px 16px;
 }
 
 .filaRojo{
@@ -134,14 +153,13 @@ body{
     border:1px solid #00d060;
 }
 
-#montoRojo,
-#montoVerde{
+.montoOverlay{
     color:#fff;
     text-shadow:0 0 8px rgba(255,255,255,.45);
 }
 
 #estadoApuestas{
-    margin-top:8px;
+    margin-top:10px;
     padding:12px;
     text-align:center;
     font-size:19px;
@@ -191,14 +209,38 @@ body{
 
     <div id="panelPelea">PELEA #</div>
 
+    <div class="bloqueTitulo">APUESTAS NORMALES</div>
+
     <div class="filaApuesta filaRojo">
         <span>ROJO</span>
-        <span id="montoRojo">$0</span>
+        <span id="montoNormalRojo" class="montoOverlay">$0</span>
     </div>
 
     <div class="filaApuesta filaVerde">
         <span>VERDE</span>
-        <span id="montoVerde">$0</span>
+        <span id="montoNormalVerde" class="montoOverlay">$0</span>
+    </div>
+
+    <div class="bloqueTitulo">APUESTAS A 80</div>
+
+    <div class="filaApuesta filaApuestaMini filaRojo">
+        <span>DOY80 ROJO</span>
+        <span id="montoDoy80Rojo" class="montoOverlay">$0</span>
+    </div>
+
+    <div class="filaApuesta filaApuestaMini filaVerde">
+        <span>DOY80 VERDE</span>
+        <span id="montoDoy80Verde" class="montoOverlay">$0</span>
+    </div>
+
+    <div class="filaApuesta filaApuestaMini filaRojo">
+        <span>AGARRO80 ROJO</span>
+        <span id="montoAgarro80Rojo" class="montoOverlay">$0</span>
+    </div>
+
+    <div class="filaApuesta filaApuestaMini filaVerde">
+        <span>AGARRO80 VERDE</span>
+        <span id="montoAgarro80Verde" class="montoOverlay">$0</span>
     </div>
 
     <div id="estadoApuestas">APUESTAS ABIERTAS</div>
@@ -272,7 +314,6 @@ function mostrarEventoAnimado(evento){
     const partidoVerde =
         String(datos.verde || "").trim();
 
-    /* ESTILO POR DEFECTO (DORADO) */
     overlay.style.background =
         "rgba(0,0,0,.90)";
 
@@ -285,7 +326,6 @@ function mostrarEventoAnimado(evento){
     document.getElementById("marcaAnimada").style.color =
         "#d4af37";
 
-    /* GANA ROJO */
     if(
         ganador &&
         partidoRojo &&
@@ -305,7 +345,6 @@ function mostrarEventoAnimado(evento){
             "#ff5050";
     }
 
-    /* GANA VERDE */
     else if(
         ganador &&
         partidoVerde &&
@@ -325,7 +364,6 @@ function mostrarEventoAnimado(evento){
             "#00ff66";
     }
 
-    /* TABLAS O CANCELADA */
     else if(
         textoCompleto.includes("tabla") ||
         textoCompleto.includes("cancel")
@@ -364,6 +402,15 @@ function mostrarEventoAnimado(evento){
     setTimeout(() => {
         overlay.style.display = "none";
     }, 5000);
+}
+
+function ponerTotalesEnCero(){
+    document.getElementById("montoNormalRojo").innerText = "$0";
+    document.getElementById("montoNormalVerde").innerText = "$0";
+    document.getElementById("montoDoy80Rojo").innerText = "$0";
+    document.getElementById("montoDoy80Verde").innerText = "$0";
+    document.getElementById("montoAgarro80Rojo").innerText = "$0";
+    document.getElementById("montoAgarro80Verde").innerText = "$0";
 }
 
 async function cargarPanelApuestas(){
@@ -423,19 +470,31 @@ async function cargarPanelApuestas(){
 
     if(errorTotales){
         console.error("Error cargando totales:", errorTotales);
-        document.getElementById("montoRojo").innerText = "$0";
-        document.getElementById("montoVerde").innerText = "$0";
+        ponerTotalesEnCero();
     }
 
-    const totalRojo =
+    const filaTotales =
         totales && totales.length
-        ? Number(totales[0].total_rojo || 0)
-        : 0;
+        ? totales[0]
+        : {};
 
-    const totalVerde =
-        totales && totales.length
-        ? Number(totales[0].total_verde || 0)
-        : 0;
+    const normalRojo =
+        Number(filaTotales.normal_rojo || 0);
+
+    const normalVerde =
+        Number(filaTotales.normal_verde || 0);
+
+    const doy80Rojo =
+        Number(filaTotales.doy80_rojo || 0);
+
+    const doy80Verde =
+        Number(filaTotales.doy80_verde || 0);
+
+    const agarro80Rojo =
+        Number(filaTotales.agarro80_rojo || 0);
+
+    const agarro80Verde =
+        Number(filaTotales.agarro80_verde || 0);
 
     const numeroPelea =
         pelea.numero_derby || pelea.id;
@@ -446,11 +505,23 @@ async function cargarPanelApuestas(){
     document.getElementById("panelPelea").innerText =
         "PELEA #" + numeroPelea;
 
-    document.getElementById("montoRojo").innerText =
-        formatoDinero(totalRojo);
+    document.getElementById("montoNormalRojo").innerText =
+        formatoDinero(normalRojo);
 
-    document.getElementById("montoVerde").innerText =
-        formatoDinero(totalVerde);
+    document.getElementById("montoNormalVerde").innerText =
+        formatoDinero(normalVerde);
+
+    document.getElementById("montoDoy80Rojo").innerText =
+        formatoDinero(doy80Rojo);
+
+    document.getElementById("montoDoy80Verde").innerText =
+        formatoDinero(doy80Verde);
+
+    document.getElementById("montoAgarro80Rojo").innerText =
+        formatoDinero(agarro80Rojo);
+
+    document.getElementById("montoAgarro80Verde").innerText =
+        formatoDinero(agarro80Verde);
 
     const estadoApuestas =
     document.getElementById("estadoApuestas");
