@@ -5,6 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sala del Jugador - ProDerbyLIVE</title>
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* VIDEO GRANDE EN PANEL JUGADOR */
+        #videoYoutube .pelea-card {
+            padding: 10px !important;
+        }
+
+        #videoYoutube .pelea-card h3 {
+            display: none !important;
+        }
+
+        #videoYoutube .pelea-card > div {
+            width: 100% !important;
+            padding-bottom: 56.25% !important;
+            border-radius: 18px !important;
+        }
+
+        @media (max-width: 768px) {
+            .jugador-video-layout {
+                width: 100%;
+            }
+
+            .video-columna {
+                width: 100%;
+            }
+
+            #videoYoutube .pelea-card {
+                padding: 8px !important;
+                margin: 0 auto !important;
+                width: 100% !important;
+                box-sizing: border-box;
+            }
+
+            #videoYoutube .pelea-card > div {
+                width: 100% !important;
+                padding-bottom: 62% !important;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -116,7 +155,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="jugador.js?v=peleas-auto-2"></script>
+    <script src="jugador.js?v=peleas-auto-3"></script>
 
 </body>
 </html>
