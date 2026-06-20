@@ -915,11 +915,19 @@ setInterval(async () => {
 
     await cargarDerbyActivo();
 
-    if (
-        derbyActivo &&
-        derbyActivo.youtube_url &&
-        obtenerYoutubeEmbed(derbyActivo.youtube_url) !== youtubeAntes
-    ) {
+    if (!derbyActivo) {
+        if (youtubeActual !== "sin-video") {
+            youtubeActual = "";
+            cargarVideoYoutube();
+        }
+
+        await cargarPeleas();
+        return;
+    }
+
+    const embedNuevo = obtenerYoutubeEmbed(derbyActivo.youtube_url || "");
+
+    if (embedNuevo !== youtubeAntes) {
         cargarVideoYoutube();
     }
 
