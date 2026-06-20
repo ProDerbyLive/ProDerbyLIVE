@@ -1199,12 +1199,53 @@ body:has(.acceso-contenedor)::before{
     .apuesta-80-row{
         grid-template-columns:1fr 1fr;
     }
-}
-/* ==========================================
-   VIDEO HERO PRODERBYLIVE
+    /* ==========================================
+   VIDEO GRANDE SIN CORTARSE
 ========================================== */
 
 #videoYoutube .pelea-card{
     padding:8px !important;
 }
+
+#videoYoutube .pelea-card > div{
+    width:100% !important;
+    padding-bottom:56.25% !important;
+    height:0 !important;
+    overflow:hidden !important;
+    border-radius:18px !important;
+}
+
+#videoYoutube iframe{
+    width:100% !important;
+    height:100% !important;
+    aspect-ratio:auto !important;
+    object-fit:contain !important;
+}
+
+@media(max-width:768px){
+
+    .card{
+        padding-left:10px !important;
+        padding-right:10px !important;
+    }
+
+    .video-columna{
+        width:100% !important;
+    }
+
+    .transmision-layout{
+        width:100% !important;
+    }
+
+    #videoYoutube .pelea-card{
+        margin-left:-4px !important;
+        margin-right:-4px !important;
+        padding:6px !important;
+    }
+
+    #videoYoutube .pelea-card > div{
+        padding-bottom:56.25% !important;
+    }
+}
+
 
