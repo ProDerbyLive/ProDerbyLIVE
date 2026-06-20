@@ -911,7 +911,18 @@ setInterval(actualizarSaldoYEstado, 5000);
 setInterval(async () => {
     if (!jugadorActual) return;
 
+    const youtubeAntes = youtubeActual;
+
     await cargarDerbyActivo();
+
+    if (
+        derbyActivo &&
+        derbyActivo.youtube_url &&
+        obtenerYoutubeEmbed(derbyActivo.youtube_url) !== youtubeAntes
+    ) {
+        cargarVideoYoutube();
+    }
+
     await cargarPeleas();
 }, 3000);
 
